@@ -66,23 +66,24 @@ namespace stud
       // that the stream and name are kept as references so both must outlive
       // the parser instance.
       //
-      // stream_mode_opts controls streaming mode: "0", the default,
-      // disables streaming mode; "1" enables streaming mode with no
-      // separators allowed between two JSON values (e.g. {...}{...});
-      // "1\n " enables streaming mode with one or more newlines or
-      // spaces expected between JSON values; "1ws" enables streaming
-      // mode with one or more instances of any valid JSON whitespace
-      // token expected between JSON values.
+      // The streaming_mode_separators parameter determines the
+      // whitespace characters accepted between JSON values when
+      // streaming mode is enabled.  A value of "" allows no separators
+      // (e.g. {...}{...}); "\n " allows one or more newlines or spaces;
+      // "ws" allows one or more instances of any valid JSON whitespace
+      // token.
       //
       // If stream exceptions are enabled then the std::ios_base::failure
       // exception is used to report input/output errors (badbit and failbit).
       // Otherwise, those are reported as the invalid_json exception.
       //
       parser (std::istream&, const std::string& name,
-              const std::string& stream_mode_opts = "0");
+              bool streaming_mode_enabled = false,
+              const std::string& streaming_mode_separators = "");
       parser (std::istream&, const char* name,
-              const char* stream_mode_opts = "0");
-      parser (std::istream&, std::string&&, std::string&&) = delete;
+              bool streaming_mode_enabled = false,
+              const std::string& streaming_mode_separators = "");
+      parser (std::istream&, std::string&&, bool, const std::string&) = delete;
 
       // Parse a memory buffer that contains the entire JSON input text.
       //
@@ -91,10 +92,13 @@ namespace stud
       // the parser instance.
       //
       parser (const void* text, std::size_t size, const std::string& name,
-              const std::string& stream_mode_opts = "0");
+              bool streaming_mode_enabled = false,
+              const std::string& streaming_mode_separators = "");
       parser (const void* text, std::size_t size, const char* name,
-              const char* stream_mode_opts = "0");
-      parser (const void*, std::size_t, std::string&&, std::string&&) = delete;
+              bool streaming_mode_enabled = false,
+              const std::string& streaming_mode_separators = "");
+      parser (const void*, std::size_t, std::string&&, bool,
+              const std::string&) = delete;
 
       parser (parser&&) = delete;
       parser (const parser&) = delete;
@@ -193,13 +197,12 @@ namespace stud
 
     private:
       // Throws std::invalid_argument if the specified separators are
-      // invalid/malformed (e.g., not valid JSON whitespace) or if
-      // storage allocation for the separators fails.
+      // invalid/malformed (e.g., not valid JSON whitespace).
       //
       // If anything goes wrong the JSON stream will be closed.
       //
       void
-      parse_streaming_mode_opts (const char* opts);
+      init_streaming_mode ();
 
       // Checks whether or not a character is a valid streaming mode
       // separator according to the configured streaming mode options.
@@ -219,11 +222,11 @@ namespace stud
       // Defaults to false despite pdjson defaulting to true because we
       // have more options than "on" and "off" only.
       //
-      bool streaming_enabled_ {false};
-      // Determines the kinds of whitespace allowed between JSON texts
+      bool streaming_mode_enabled_ {false};
+      // Determines the kinds of whitespace allowed between JSON values
       // in streaming mode (see constructors for details).
       //
-      std::string streaming_separators_;
+      std::string streaming_mode_separators_;
 
       // Cached raw value.
       //

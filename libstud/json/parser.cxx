@@ -56,54 +56,34 @@ namespace stud
     }
 
     void
-    parser::parse_streaming_mode_opts (const char* opts)
-    try
+    parser::init_streaming_mode ()
     {
-      if (!opts || opts[0] == '0')
+      json_set_streaming (impl_, streaming_mode_enabled_);
+      if (streaming_mode_enabled_ && streaming_mode_separators_ != "ws")
       {
-        streaming_enabled_ = false;
-      }
-      else
-      {
-        if (opts[0] != '1')
+        for (auto c : streaming_mode_separators_)
         {
-          throw std::invalid_argument (
-              "Invalid streaming mode options string '"s + std::string (opts) +
-              "'");
-        }
-        ++opts;
-        streaming_enabled_ = true;
-        streaming_separators_ = opts;
-        if (streaming_separators_ != "ws"s)
-        {
-          for (auto c : streaming_separators_)
+          if (!json_isspace (c))
           {
-            if (!json_isspace (c))
-            {
-              throw std::invalid_argument (
-                  "Streaming mode: invalid JSON text separator '"s + c + "'");
-            }
+            json_close (impl_);
+            throw std::invalid_argument (
+                "Streaming mode: invalid JSON text separator '"s + c + "'");
           }
         }
       }
-      json_set_streaming (impl_, streaming_enabled_);
-    }
-    catch (...)
-    {
-      json_close (impl_);
-      throw;
     }
 
     bool
     parser::is_valid_streaming_separator (const char c) const noexcept
     {
-      if (streaming_separators_ == "ws")
+      assert (streaming_mode_enabled_);
+      if (streaming_mode_separators_ == "ws")
       {
         return json_isspace (c);
       }
       else
       {
-        for (auto sep : streaming_separators_)
+        for (auto sep : streaming_mode_separators_)
         {
           if (c == sep)
             return true;
@@ -118,19 +98,27 @@ namespace stud
     // NOTE: watch out for exception safety (specifically, doing anything that
     // might throw after opening the stream).
     //
-    parser::parser (istream& is, const char* n, const char* stream_mode_opts)
-        : input_name (n), stream_ {&is, nullptr}, raw_s_ (nullptr), raw_n_ (0)
+    parser::parser (istream& is, const char* n, bool streaming_mode_enabled,
+                    const std::string& streaming_mode_separators)
+        : input_name (n), stream_ {&is, nullptr},
+          streaming_mode_enabled_ (streaming_mode_enabled),
+          streaming_mode_separators_ (streaming_mode_separators),
+          raw_s_ (nullptr), raw_n_ (0)
     {
       json_open_user (impl_, &stream_get, &stream_peek, &stream_);
-      parse_streaming_mode_opts (stream_mode_opts);
+      init_streaming_mode ();
     }
 
     parser::parser (const void* t, size_t s, const char* n,
-                    const char* stream_mode_opts)
-        : input_name (n), stream_{nullptr, nullptr}, raw_s_ (nullptr),
-          raw_n_ (0) {
+                    bool streaming_mode_enabled,
+                    const std::string& streaming_mode_separators)
+        : input_name (n), stream_ {nullptr, nullptr},
+          streaming_mode_enabled_ (streaming_mode_enabled),
+          streaming_mode_separators_ (streaming_mode_separators),
+          raw_s_ (nullptr), raw_n_ (0)
+    {
       json_open_buffer (impl_, t, s);
-      parse_streaming_mode_opts (stream_mode_opts);
+      init_streaming_mode ();
     }
 
     optional<event> parser::
@@ -158,12 +146,12 @@ namespace stud
       {
       case JSON_DONE:
       {
-        if (!streaming_enabled_)
+        if (!streaming_mode_enabled_)
           return nullopt;
         // Whether or not at least one of the configured valid streaming
         // mode separators were found
         //
-        bool separator_found (streaming_separators_.empty ());
+        bool separator_found (streaming_mode_separators_.empty ());
         int c;
         while (is_valid_streaming_separator (c = json_source_peek (impl_)))
         {

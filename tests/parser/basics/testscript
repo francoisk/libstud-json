@@ -119,9 +119,9 @@ $* <'trux' 2>>EOE != 0
 <stdin>:1:0: error: expected 'e' instead of byte 'x'
 EOE
 
-: streaming-off-no-separators
+: streaming-off-fail-no-ws
 :
-$* --streaming-mode-opts 0 <<EOI >>EOO 2>>EOE != 0
+$* <<EOI >>EOO 2>>EOE != 0
 [0, 1, 2][3, 4, 5]
 EOI
 [
@@ -133,9 +133,9 @@ EOO
 <stdin>:1:0: error: expected end of text instead of byte '['
 EOE
 
-: streaming-off-fail
+: streaming-off-fail-space
 :
-$* --streaming-mode-opts "0" <<EOI >>EOO 2>>EOE != 0
+$* <<EOI >>EOO 2>>EOE != 0
 [0, 1, 2] [3, 4, 5]
 EOI
 [
@@ -149,7 +149,7 @@ EOE
 
 : streaming-no-separators
 :
-$* --streaming-mode-opts 1 <<EOI >>EOO
+$* --streaming-mode-separators "" <<EOI >>EOO
 [0, 1, 2][3, 4, 5]
 EOI
 [
@@ -166,7 +166,7 @@ EOO
 
 : streaming-no-separators-fail
 :
-$* --streaming-mode-opts 1 <<EOI >>EOO 2>>EOE != 0
+$* --streaming-mode-separators "" <<EOI >>EOO 2>>EOE != 0
 [0, 1, 2] [3, 4, 5]
 EOI
 [
@@ -180,7 +180,7 @@ EOE
 
 : streaming-space-separator
 :
-$* --streaming-mode-opts "1 " <<EOI >>EOO
+$* --streaming-mode-separators " " <<EOI >>EOO
 [0, 1, 2] [3, 4, 5]
 EOI
 [
@@ -197,7 +197,7 @@ EOO
 
 : streaming-space-separators-fail
 :
-$* --streaming-mode-opts "1 " <<EOI >>EOO 2>>EOE != 0
+$* --streaming-mode-separators " " <<EOI >>EOO 2>>EOE != 0
 [0, 1, 2][3, 4, 5]
 EOI
 [
@@ -211,7 +211,7 @@ EOE
 
 : streaming-space-tab-separators
 :
-$* --streaming-mode-opts "1 	" <<EOI >>EOO
+$* --streaming-mode-separators " 	" <<EOI >>EOO
 [0, 1, 2] [3, 4, 5]	 [6, 7, 8]
 EOI
 [
@@ -233,7 +233,7 @@ EOO
 
 : streaming-space-tab-separators-fail
 :
-$* --streaming-mode-opts "1	 " <<EOI >>EOO 2>>EOE != 0
+$* --streaming-mode-separators "	 " <<EOI >>EOO 2>>EOE != 0
 [0, 1, 2]
 [3, 4, 5]
 EOI
@@ -248,7 +248,7 @@ EOE
 
 : streaming-any-ws-separator
 :
-$* --streaming-mode-opts "1ws" <<EOI >>EOO
+$* --streaming-mode-separators "ws" <<EOI >>EOO
 [0, 1, 2]
     [3, 4, 5]
 EOI
@@ -266,7 +266,7 @@ EOO
 
 : streaming-any-ws-separator-fail
 :
-$* --streaming-mode-opts "1ws" <<EOI >>EOO 2>>EOE != 0
+$* --streaming-mode-separators "ws" <<EOI >>EOO 2>>EOE != 0
 [0, 1, 2][3, 4, 5]
 EOI
 [
