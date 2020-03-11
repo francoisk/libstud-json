@@ -31,6 +31,7 @@ int main (int argc, const char* argv[])
 {
   bool fail_exc (false);
   bool fail_bit (false);
+  std::string stream_opts ("0");
   string nm;
   if (argc > 1)
   {
@@ -38,6 +39,15 @@ int main (int argc, const char* argv[])
 
     if      (o == "--fail-exc") fail_exc = true;
     else if (o == "--fail-bit") fail_bit = true;
+    else if (o == "--streaming-mode-opts")
+    {
+      if (argc != 3)
+      {
+        cerr << "Missing streaming mode options" << endl;
+        return 1;
+      }
+      stream_opts = argv[2];
+    }
     else nm = move (o);
   }
 
@@ -53,7 +63,7 @@ int main (int argc, const char* argv[])
                       istream::failbit |
                       (fail_exc ? istream::eofbit : istream::goodbit));
 
-    parser p (cin, "<stdin>");
+    parser p (cin, "<stdin>", stream_opts.c_str ());
     size_t i (0); // Indentation.
 
     for (event e: p)

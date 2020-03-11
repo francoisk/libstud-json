@@ -118,3 +118,162 @@ EOE
 $* <'trux' 2>>EOE != 0
 <stdin>:1:0: error: expected 'e' instead of byte 'x'
 EOE
+
+: streaming-off-no-separators
+:
+$* --streaming-mode-opts 0 <<EOI >>EOO 2>>EOE != 0
+[0, 1, 2][3, 4, 5]
+EOI
+[
+  0
+  1
+  2
+]
+EOO
+<stdin>:1:0: error: expected end of text instead of byte '['
+EOE
+
+: streaming-off-fail
+:
+$* --streaming-mode-opts "0" <<EOI >>EOO 2>>EOE != 0
+[0, 1, 2] [3, 4, 5]
+EOI
+[
+  0
+  1
+  2
+]
+EOO
+<stdin>:1:0: error: expected end of text instead of byte '['
+EOE
+
+: streaming-no-separators
+:
+$* --streaming-mode-opts 1 <<EOI >>EOO
+[0, 1, 2][3, 4, 5]
+EOI
+[
+  0
+  1
+  2
+]
+[
+  3
+  4
+  5
+]
+EOO
+
+: streaming-no-separators-fail
+:
+$* --streaming-mode-opts 1 <<EOI >>EOO 2>>EOE != 0
+[0, 1, 2] [3, 4, 5]
+EOI
+[
+  0
+  1
+  2
+]
+EOO
+<stdin>:1:0: error: invalid/unexpected whitespace in JSON stream
+EOE
+
+: streaming-space-separator
+:
+$* --streaming-mode-opts "1 " <<EOI >>EOO
+[0, 1, 2] [3, 4, 5]
+EOI
+[
+  0
+  1
+  2
+]
+[
+  3
+  4
+  5
+]
+EOO
+
+: streaming-space-separators-fail
+:
+$* --streaming-mode-opts "1 " <<EOI >>EOO 2>>EOE != 0
+[0, 1, 2][3, 4, 5]
+EOI
+[
+  0
+  1
+  2
+]
+EOO
+<stdin>:1:0: error: invalid/unexpected whitespace in JSON stream
+EOE
+
+: streaming-space-tab-separators
+:
+$* --streaming-mode-opts "1 	" <<EOI >>EOO
+[0, 1, 2] [3, 4, 5]	 [6, 7, 8]
+EOI
+[
+  0
+  1
+  2
+]
+[
+  3
+  4
+  5
+]
+[
+  6
+  7
+  8
+]
+EOO
+
+: streaming-space-tab-separators-fail
+:
+$* --streaming-mode-opts "1	 " <<EOI >>EOO 2>>EOE != 0
+[0, 1, 2]
+[3, 4, 5]
+EOI
+[
+  0
+  1
+  2
+]
+EOO
+<stdin>:2:0: error: invalid/unexpected whitespace in JSON stream
+EOE
+
+: streaming-any-ws-separator
+:
+$* --streaming-mode-opts "1ws" <<EOI >>EOO
+[0, 1, 2]
+    [3, 4, 5]
+EOI
+[
+  0
+  1
+  2
+]
+[
+  3
+  4
+  5
+]
+EOO
+
+: streaming-any-ws-separator-fail
+:
+$* --streaming-mode-opts "1ws" <<EOI >>EOO 2>>EOE != 0
+[0, 1, 2][3, 4, 5]
+EOI
+[
+  0
+  1
+  2
+]
+EOO
+<stdin>:1:0: error: invalid/unexpected whitespace in JSON stream
+EOE

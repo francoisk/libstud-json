@@ -170,13 +170,20 @@ namespace stud
           separator_found = true;
           json_source_get (impl_);
         }
-        // If the next char is whitespace it is not valid according to
-        // the configured streaming mode separators
-        //
-        if (!separator_found || json_isspace (c))
-          goto fail_json;
         if (c == EOF)
           return nullopt;
+        // If the next char is whitespace and there's no next JSON value
+        // it is not valid according to the configured streaming mode
+        // separators
+        //
+        if ((!separator_found || json_isspace (c)) &&
+            json_peek (impl_) != JSON_DONE)
+        {
+          throw invalid_json (input_name != nullptr ? input_name : "",
+                              static_cast<uint64_t> (json_get_lineno (impl_)),
+                              0 /* column */,
+                              "invalid/unexpected whitespace in JSON stream");
+        }
         // Next char should be the beginning of the next JSON value
         //
         json_reset (impl_);
