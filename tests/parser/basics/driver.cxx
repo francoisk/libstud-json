@@ -1,7 +1,10 @@
-// Usage: argv[0] --fail-exc|--fail-bit|[<mode>]
+// Usage: argv[0]
+// --fail-exc|--fail-bit|[<mode>]|--streaming-mode-separators <separators>
 //
 // --fail-exc  -- fail due to istream exception
 // --fail-bit  -- fail due to istream badbit
+// --streaming-mode-separators <separators> -- Enables streaming mode
+//   with the specified required separators
 // <mode>      -- numeric value parsing mode: i|u|f|d|l|
 
 #include <cassert>
