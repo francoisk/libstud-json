@@ -71,7 +71,8 @@ namespace stud
       // streaming mode is enabled.  A value of "" allows no separators
       // (e.g. {...}{...}); "\n " allows one or more newlines or spaces;
       // "ws" allows one or more instances of any valid JSON whitespace
-      // token.
+      // token. Defaults to off despite pdjson defaulting to on because
+      // we have additional options.
       //
       // If stream exceptions are enabled then the std::ios_base::failure
       // exception is used to report input/output errors (badbit and failbit).
@@ -219,10 +220,7 @@ namespace stud
 
       // Whether or not streaming mode is enabled.
       //
-      // Defaults to false despite pdjson defaulting to true because we
-      // have more options than "on" and "off" only.
-      //
-      bool streaming_mode_enabled_ {false};
+      bool streaming_mode_enabled_;
       // Determines the kinds of whitespace allowed between JSON values
       // in streaming mode (see constructors for details).
       //

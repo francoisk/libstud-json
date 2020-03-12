@@ -89,7 +89,7 @@ namespace stud
             return true;
         }
         // c is not one of the defined separators or no separators were
-        // defined
+        // defined.
         //
         return false;
       }
@@ -149,7 +149,7 @@ namespace stud
         if (!streaming_mode_enabled_)
           return nullopt;
         // Whether or not at least one of the configured valid streaming
-        // mode separators were found
+        // mode separators were found.
         //
         bool separator_found (streaming_mode_separators_.empty ());
         int c;
@@ -158,24 +158,20 @@ namespace stud
           separator_found = true;
           json_source_get (impl_);
         }
+        // If EOF was seen, subsequent peeks will fail so best to handle
+        // it now.
+        //
         if (c == EOF)
           return nullopt;
-        // If the next char is whitespace and there's no next JSON value
-        // it is not valid according to the configured streaming mode
-        // separators
-        //
-        if ((!separator_found || json_isspace (c)) &&
-            json_peek (impl_) != JSON_DONE)
+        if (!separator_found && json_peek (impl_) != JSON_DONE)
         {
           throw invalid_json (input_name != nullptr ? input_name : "",
                               static_cast<uint64_t> (json_get_lineno (impl_)),
                               0 /* column */,
                               "invalid/unexpected whitespace in JSON stream");
         }
-        // Next char should be the beginning of the next JSON value
-        //
         json_reset (impl_);
-        return next (); // Should be tail recursive
+        return next (); // Should be tail recursive.
       }
       break;
       case JSON_ERROR:       goto fail_json;
