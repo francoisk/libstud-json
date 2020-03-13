@@ -198,7 +198,7 @@ EOI
   1
 ]
 EOO
-<stdin>:1:0: error: invalid/unexpected whitespace in JSON stream
+<stdin>:1:0: error: streaming mode: missing required separator(s) between JSON values
 EOE
 
 # Streaming mode enabled with required separators (SPACE); input contains
@@ -213,7 +213,7 @@ $* --streaming-mode-separators " " <<EOI >>EOO 2>>EOE != 0
 EOI
 0
 EOO
-<stdin>:2:0: error: invalid/unexpected whitespace in JSON stream
+<stdin>:2:0: error: streaming mode: missing required separator(s) between JSON values
 EOE
 
 # Streaming mode enabled with required separators (SPACE TAB); input
@@ -286,7 +286,7 @@ EOI
   1
 ]
 EOO
-<stdin>:1:0: error: invalid/unexpected whitespace in JSON stream
+<stdin>:1:0: error: streaming mode: missing required separator(s) between JSON values
 EOE
 
 # Streaming mode enabled with required separators (any whitespace);
