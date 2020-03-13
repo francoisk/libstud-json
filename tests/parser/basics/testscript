@@ -317,10 +317,20 @@ EOI
 1
 EOO
 
-: streaming-on-no-required-non-ws-separator-in-input
+: streaming-on-no-required-single-non-ws-separator-in-input
 :
 $* --streaming-mode-separators "" <<EOI >>EOO 2>>EOE != 0
 0*1
+EOI
+0
+EOO
+<stdin>:1:0: error: unexpected byte '*' in value
+EOE
+
+: streaming-on-no-required-non-ws-separator-in-input
+:
+$* --streaming-mode-separators "" <<EOI >>EOO 2>>EOE != 0
+0 * 1
 EOI
 0
 EOO

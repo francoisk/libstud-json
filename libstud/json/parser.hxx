@@ -66,13 +66,20 @@ namespace stud
       // that the stream and name are kept as references so both must outlive
       // the parser instance.
       //
-      // The streaming_mode_separators parameter determines the
-      // whitespace characters accepted between JSON values when
-      // streaming mode is enabled.  A value of "" allows no separators
-      // (e.g. {...}{...}); "\n " allows one or more newlines or spaces;
-      // "ws" allows one or more instances of any valid JSON whitespace
-      // token. Defaults to off despite pdjson defaulting to on because
-      // we have additional options.
+      // The streaming_mode_enabled parameter enables/disables streaming
+      // mode in which the input stream may consist of multiple JSON
+      // values, possibly separated by whitespace (see below). Defaults
+      // to off despite pdjson defaulting to on because we have
+      // additional options.
+      //
+      // The streaming_mode_separators parameter specifies the
+      // separators (which may be any JSON whitespace character)
+      // required between JSON values when streaming mode is enabled. At
+      // least one of the required separators must be present between
+      // every pair of JSON values. A value of "" requires no separators
+      // (ie, accepts "{...}{...}" and "{...} {...}"); "\n " requires at
+      // least one newline or space; and "ws" requires at least one
+      // instance of any valid JSON whitespace token.
       //
       // If stream exceptions are enabled then the std::ios_base::failure
       // exception is used to report input/output errors (badbit and failbit).
@@ -221,7 +228,7 @@ namespace stud
       // Whether or not streaming mode is enabled.
       //
       bool streaming_mode_enabled_;
-      // Determines the kinds of whitespace allowed between JSON values
+      // Determines the kinds of whitespace required between JSON values
       // in streaming mode (see constructors for details).
       //
       std::string streaming_mode_separators_;

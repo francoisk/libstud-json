@@ -54,9 +54,10 @@ LLVMFuzzerTestOneInput (const uint8_t* data, size_t size)
   //
   if (!parse (data, size, false, ""))
   {
-    parse (data, size, true, "");
-    parse (data, size, true, " ");
-    parse (data, size, true, "	 ");
+    // Streaming on with at least one JSON whitespace char required
+    // between JSON values. This should exercise most of the streaming
+    // code.
+    //
     parse (data, size, true, "ws");
   }
   return 0;

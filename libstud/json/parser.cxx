@@ -100,10 +100,12 @@ namespace stud
     //
     parser::parser (istream& is, const char* n, bool streaming_mode_enabled,
                     const std::string& streaming_mode_separators)
-        : input_name (n), stream_ {&is, nullptr},
+        : input_name (n),
+          stream_ {&is, nullptr},
           streaming_mode_enabled_ (streaming_mode_enabled),
           streaming_mode_separators_ (streaming_mode_separators),
-          raw_s_ (nullptr), raw_n_ (0)
+          raw_s_ (nullptr),
+          raw_n_ (0)
     {
       json_open_user (impl_, &stream_get, &stream_peek, &stream_);
       init_streaming_mode ();
@@ -112,10 +114,12 @@ namespace stud
     parser::parser (const void* t, size_t s, const char* n,
                     bool streaming_mode_enabled,
                     const std::string& streaming_mode_separators)
-        : input_name (n), stream_ {nullptr, nullptr},
+        : input_name (n),
+          stream_ {nullptr, nullptr},
           streaming_mode_enabled_ (streaming_mode_enabled),
           streaming_mode_separators_ (streaming_mode_separators),
-          raw_s_ (nullptr), raw_n_ (0)
+          raw_s_ (nullptr),
+          raw_n_ (0)
     {
       json_open_buffer (impl_, t, s);
       init_streaming_mode ();
