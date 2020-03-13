@@ -30,14 +30,23 @@ namespace stud
     }
 
     inline parser::
-    parser (std::istream& is, const std::string& n)
-        : parser (is, n.c_str ())
+    parser (std::istream& is,
+            const std::string& n,
+            bool streaming_mode_enabled,
+            const std::string& streaming_mode_separators)
+        : parser (is, n.c_str (), streaming_mode_enabled,
+                  streaming_mode_separators)
     {
     }
 
     inline parser::
-    parser (const void* t, std::size_t s, const std::string& n)
-        : parser (t, s, n.c_str ())
+    parser (const void* t,
+            std::size_t s,
+            const std::string& n,
+            bool streaming_mode_enabled,
+            const std::string& streaming_mode_separators)
+        : parser (t, s, n.c_str (), streaming_mode_enabled,
+                  streaming_mode_separators)
     {
     }
 

@@ -118,3 +118,231 @@ EOE
 $* <'trux' 2>>EOE != 0
 <stdin>:1:0: error: expected 'e' instead of byte 'x'
 EOE
+
+# Streaming mode disabled; input contains multiple JSON values without
+# separators
+#
+: streaming-off-fails-without-ws
+:
+$* <<EOI >>EOO 2>>EOE != 0
+[0][1]
+EOI
+[
+  0
+]
+EOO
+<stdin>:1:0: error: expected end of text instead of byte '['
+EOE
+
+# Streaming mode disabled; input contains multiple JSON values with
+# separator
+#
+: streaming-off-fails-with-ws
+:
+$* <<EOI >>EOO 2>>EOE != 0
+0 1 2
+EOI
+0
+EOO
+<stdin>:1:0: error: expected end of text instead of byte '1'
+EOE
+
+# Streaming mode enabled with no required separators; input contains no
+# separators
+#
+: streaming-on-no-separators-required
+:
+$* --streaming-mode-separators "" <<EOI >>EOO
+[0][1][2]
+EOI
+[
+  0
+]
+[
+  1
+]
+[
+  2
+]
+EOO
+
+# Streaming mode enabled with no required separators; input contains
+# multiple separators, all of which should be accepted
+#
+: streaming-on-no-separators-required-with-ws
+:
+$* --streaming-mode-separators "" <<EOI >>EOO
+0 	1
+  2[3]
+EOI
+0
+1
+2
+[
+  3
+]
+EOO
+
+# Streaming mode enabled with required separators; input contains values
+# without separators
+#
+: streaming-on-required-input-ws-empty
+:
+$* --streaming-mode-separators " " <<EOI >>EOO 2>>EOE != 0
+[0] [1][2]
+EOI
+[
+  0
+]
+[
+  1
+]
+EOO
+<stdin>:1:0: error: streaming mode: missing required separator(s) between JSON values
+EOE
+
+# Streaming mode enabled with required separators (SPACE); input contains
+# separators (NL TAB) but none of the required ones
+#
+: streaming-on-required-missing-from-input-ws
+:
+$* --streaming-mode-separators " " <<EOI >>EOO 2>>EOE != 0
+0
+	1
+2
+EOI
+0
+EOO
+<stdin>:2:0: error: streaming mode: missing required separator(s) between JSON values
+EOE
+
+# Streaming mode enabled with required separators (SPACE TAB); input
+# contains a subset (SPACE)
+#
+: streaming-on-required-superset-of-input-ws
+:
+$* --streaming-mode-separators " 	" <<EOI >>EOO
+0 1  2
+EOI
+0
+1
+2
+EOO
+
+# Streaming mode enabled with required separators (SPACE); input contains a
+# superset (TAB SPACE TAB), (SPACE TAB SPACE)
+#
+: streaming-on-required-subset-of-input-ws
+:
+$* --streaming-mode-separators " " <<EOI >>EOO
+0	 	1 	 2
+EOI
+0
+1
+2
+EOO
+
+# Streaming mode enabled with required separators (SPACE TAB)
+# intersecting with input (NL TAB), (NL SPACE)
+#
+: streaming-on-required-intersection-of-input-ws
+:
+$* --streaming-mode-separators " 	" <<EOI >>EOO
+0
+	1
+ 2
+EOI
+0
+1
+2
+EOO
+
+# Streaming mode enabled with required separators (SPACE TAB) input
+# contains identical separators (SPACE TAB), same order, then different
+# order (TAB SPACE)
+#
+: streaming-on-required-equals-input-ws-same-order
+:
+$* --streaming-mode-separators " 	" <<EOI >>EOO
+0 	1	 2
+EOI
+0
+1
+2
+EOO
+
+# Streaming mode enabled with required separators (any whitespace);
+# input contains pair without separators
+#
+: streaming-on-any-ws-required-input-without-ws
+:
+$* --streaming-mode-separators "ws" <<EOI >>EOO 2>>EOE != 0
+[0] [1][2]
+EOI
+[
+  0
+]
+[
+  1
+]
+EOO
+<stdin>:1:0: error: streaming mode: missing required separator(s) between JSON values
+EOE
+
+# Streaming mode enabled with required separators (any whitespace);
+# input contains multiple separators (SPACE TAB NL)
+#
+: streaming-on-any-ws-required-input-with-ws
+:
+$* --streaming-mode-separators "ws" <<EOI >>EOO
+0 1 	2	3
+ 4
+EOI
+0
+1
+2
+3
+4
+EOO
+
+# Multiple whitespace (SPACE, TAB, NL) trailing last JSON value
+#
+: streaming-on-trailing-ws
+:
+$* --streaming-mode-separators " " <<EOI >>EOO
+0 1 	
+
+EOI
+0
+1
+EOO
+
+: streaming-on-no-required-single-non-ws-separator-in-input
+:
+$* --streaming-mode-separators "" <<EOI >>EOO 2>>EOE != 0
+0*1
+EOI
+0
+EOO
+<stdin>:1:0: error: unexpected byte '*' in value
+EOE
+
+: streaming-on-no-required-non-ws-separator-in-input
+:
+$* --streaming-mode-separators "" <<EOI >>EOO 2>>EOE != 0
+0 * 1
+EOI
+0
+EOO
+<stdin>:1:0: error: unexpected byte '*' in value
+EOE
+
+: streaming-on-any-required-non-ws-separator-in-input
+:
+$* --streaming-mode-separators "ws" <<EOI >>EOO 2>>EOE != 0
+0  *  1
+EOI
+0
+EOO
+<stdin>:1:0: error: unexpected byte '*' in value
+EOE

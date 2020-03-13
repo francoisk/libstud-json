@@ -1,7 +1,10 @@
-// Usage: argv[0] --fail-exc|--fail-bit|[<mode>]
+// Usage: argv[0]
+// --fail-exc|--fail-bit|[<mode>]|--streaming-mode-separators <separators>
 //
 // --fail-exc  -- fail due to istream exception
 // --fail-bit  -- fail due to istream badbit
+// --streaming-mode-separators <separators> -- Enables streaming mode
+//   with the specified required separators
 // <mode>      -- numeric value parsing mode: i|u|f|d|l|
 
 #include <cassert>
@@ -31,6 +34,8 @@ int main (int argc, const char* argv[])
 {
   bool fail_exc (false);
   bool fail_bit (false);
+  bool streaming_mode_enabled (false);
+  std::string streaming_mode_separators;
   string nm;
   if (argc > 1)
   {
@@ -38,6 +43,16 @@ int main (int argc, const char* argv[])
 
     if      (o == "--fail-exc") fail_exc = true;
     else if (o == "--fail-bit") fail_bit = true;
+    else if (o == "--streaming-mode-separators")
+    {
+      if (argc != 3)
+      {
+        cerr << "Missing streaming mode separators" << endl;
+        return 1;
+      }
+      streaming_mode_enabled = true;
+      streaming_mode_separators = argv[2];
+    }
     else nm = move (o);
   }
 
@@ -53,7 +68,8 @@ int main (int argc, const char* argv[])
                       istream::failbit |
                       (fail_exc ? istream::eofbit : istream::goodbit));
 
-    parser p (cin, "<stdin>");
+    parser p (cin, "<stdin>", streaming_mode_enabled,
+              streaming_mode_separators);
     size_t i (0); // Indentation.
 
     for (event e: p)

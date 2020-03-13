@@ -55,27 +55,76 @@ namespace stud
       return EOF;
     }
 
+    void parser::
+    init_streaming_mode ()
+    {
+      json_set_streaming (impl_, streaming_mode_enabled_);
+      if (streaming_mode_enabled_ && streaming_mode_separators_ != "ws")
+      {
+        for (auto c : streaming_mode_separators_)
+        {
+          if (!json_isspace (c))
+          {
+            json_close (impl_);
+            throw std::invalid_argument (
+                "Streaming mode: invalid JSON value separator '"s + c + "'");
+          }
+        }
+      }
+    }
+
+    bool parser::
+    is_valid_streaming_separator (const char c) const noexcept
+    {
+      assert (streaming_mode_enabled_);
+      if (streaming_mode_separators_ == "ws")
+      {
+        return json_isspace (c);
+      }
+      else
+      {
+        for (auto sep : streaming_mode_separators_)
+        {
+          if (c == sep)
+            return true;
+        }
+        // c is not one of the defined separators or no separators were
+        // defined.
+        //
+        return false;
+      }
+    }
+
     // NOTE: watch out for exception safety (specifically, doing anything that
     // might throw after opening the stream).
     //
     parser::
-    parser (istream& is, const char* n)
+    parser (istream& is, const char* n, bool streaming_mode_enabled,
+            const std::string& streaming_mode_separators)
         : input_name (n),
           stream_ {&is, nullptr},
-          raw_s_ (nullptr), raw_n_ (0)
+          streaming_mode_enabled_ (streaming_mode_enabled),
+          streaming_mode_separators_ (streaming_mode_separators),
+          raw_s_ (nullptr),
+          raw_n_ (0)
     {
       json_open_user (impl_, &stream_get, &stream_peek, &stream_);
-      json_set_streaming (impl_, false);
+      init_streaming_mode ();
     }
 
     parser::
-    parser (const void* t, size_t s, const char* n)
+    parser (const void* t, size_t s, const char* n,
+            bool streaming_mode_enabled,
+            const std::string& streaming_mode_separators)
         : input_name (n),
           stream_ {nullptr, nullptr},
-          raw_s_ (nullptr), raw_n_ (0)
+          streaming_mode_enabled_ (streaming_mode_enabled),
+          streaming_mode_separators_ (streaming_mode_separators),
+          raw_s_ (nullptr),
+          raw_n_ (0)
     {
       json_open_buffer (impl_, t, s);
-      json_set_streaming (impl_, false);
+      init_streaming_mode ();
     }
 
     optional<event> parser::
@@ -101,7 +150,35 @@ namespace stud
 
       switch (e)
       {
-      case JSON_DONE:        return nullopt;
+      case JSON_DONE:
+        {
+          if (!streaming_mode_enabled_)
+            return nullopt;
+          bool separator_found (streaming_mode_separators_.empty ());
+          int c;
+          while (json_isspace (c = json_source_peek (impl_)))
+          {
+            if (is_valid_streaming_separator (c))
+              separator_found = true;
+            json_source_get (impl_);
+          }
+          // If EOF was seen, subsequent peeks will fail so best to
+          // handle it now.
+          //
+          if (c == EOF)
+            return nullopt;
+          if (!separator_found && json_peek (impl_) != JSON_DONE)
+          {
+            throw invalid_json (input_name != nullptr ? input_name : "",
+                                static_cast<uint64_t> (json_get_lineno (impl_)),
+                                0 /* column */,
+                                "streaming mode: missing required separator(s) "
+                                "between JSON values");
+          }
+          json_reset (impl_);
+          return next (); // Should be tail recursive.
+        }
+      break;
       case JSON_ERROR:       goto fail_json;
       case JSON_OBJECT:      return event::begin_object;
       case JSON_OBJECT_END:  return event::end_object;
