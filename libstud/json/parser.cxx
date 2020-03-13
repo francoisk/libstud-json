@@ -170,7 +170,8 @@ namespace stud
           throw invalid_json (input_name != nullptr ? input_name : "",
                               static_cast<uint64_t> (json_get_lineno (impl_)),
                               0 /* column */,
-                              "invalid/unexpected whitespace in JSON stream");
+                              "streaming mode: missing required separator(s) "
+                              "between JSON values");
         }
         json_reset (impl_);
         return next (); // Should be tail recursive.
