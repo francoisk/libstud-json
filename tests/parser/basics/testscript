@@ -201,10 +201,12 @@ EOI
 1
 EOO
 
+# Input leads and trails with whitespace not in the required separators
+# string (TAB SPACE TAB)
 : streaming-required-subset-of-input-ws
 :
 $* --streaming-mode-separators " " <<EOI >>EOO
-0 	1
+0	 	1
 EOI
 0
 1

@@ -67,7 +67,7 @@ namespace stud
           {
             json_close (impl_);
             throw std::invalid_argument (
-                "Streaming mode: invalid JSON text separator '"s + c + "'");
+                "Streaming mode: invalid JSON value separator '"s + c + "'");
           }
         }
       }
@@ -148,14 +148,12 @@ namespace stud
       {
         if (!streaming_mode_enabled_)
           return nullopt;
-        // Whether or not at least one of the configured valid streaming
-        // mode separators were found.
-        //
         bool separator_found (streaming_mode_separators_.empty ());
         int c;
-        while (is_valid_streaming_separator (c = json_source_peek (impl_)))
+        while (json_isspace (c = json_source_peek (impl_)))
         {
-          separator_found = true;
+          if (is_valid_streaming_separator (c))
+            separator_found = true;
           json_source_get (impl_);
         }
         // If EOF was seen, subsequent peeks will fail so best to handle
