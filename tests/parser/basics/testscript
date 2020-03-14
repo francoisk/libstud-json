@@ -119,7 +119,7 @@ $* <'trux' 2>>EOE != 0
 <stdin>:1:0: error: expected 'e' instead of byte 'x'
 EOE
 
-# Streaming mode disabled; input contains multiple JSON values without
+# Streaming mode disabled; input contains multiple JSON texts without
 # separators
 #
 : streaming-off-fails-without-ws
@@ -134,7 +134,7 @@ EOO
 <stdin>:1:0: error: expected end of text instead of byte '['
 EOE
 
-# Streaming mode disabled; input contains multiple JSON values with
+# Streaming mode disabled; input contains multiple JSON texts with
 # separator
 #
 : streaming-off-fails-with-ws
@@ -183,7 +183,7 @@ EOI
 ]
 EOO
 
-# Streaming mode enabled with required separators; input contains values
+# Streaming mode enabled with required separators; input contains texts
 # without separators
 #
 : streaming-on-required-input-ws-empty
@@ -198,7 +198,7 @@ EOI
   1
 ]
 EOO
-<stdin>:1:0: error: streaming mode: missing required separator(s) between JSON values
+<stdin>:1:0: error: streaming mode: missing required separator(s) between JSON texts
 EOE
 
 # Streaming mode enabled with required separators (SPACE); input contains
@@ -213,7 +213,7 @@ $* --streaming-mode-separators " " <<EOI >>EOO 2>>EOE != 0
 EOI
 0
 EOO
-<stdin>:2:0: error: streaming mode: missing required separator(s) between JSON values
+<stdin>:2:0: error: streaming mode: missing required separator(s) between JSON texts
 EOE
 
 # Streaming mode enabled with required separators (SPACE TAB); input
@@ -286,7 +286,7 @@ EOI
   1
 ]
 EOO
-<stdin>:1:0: error: streaming mode: missing required separator(s) between JSON values
+<stdin>:1:0: error: streaming mode: missing required separator(s) between JSON texts
 EOE
 
 # Streaming mode enabled with required separators (any whitespace);
@@ -346,3 +346,80 @@ EOI
 EOO
 <stdin>:1:0: error: unexpected byte '*' in value
 EOE
+
+# All separators (SPACE TAB) required; input contains no separators
+#
+: streaming-all-required-input-without-separators
+:
+$* --streaming-mode-separators "all 	" <<EOI >>EOO 2>>EOE != 0
+[0][1]
+EOI
+[
+  0
+]
+EOO
+<stdin>:1:0: error: streaming mode: missing required separator(s) between JSON texts
+EOE
+
+# All separators (SPACE TAB) required; input contains a subset (SPACE)
+#
+: streaming-all-required-input-is-subset
+:
+$* --streaming-mode-separators "all 	" <<EOI >>EOO 2>>EOE != 0
+[0] [1]
+EOI
+[
+  0
+]
+EOO
+<stdin>:1:0: error: streaming mode: missing required separator(s) between JSON texts
+EOE
+
+# All separators (SPACE TAB) required; input contains none of them (NL
+# only)
+#
+: streaming-all-required-input-is-disjoint
+:
+$* --streaming-mode-separators "all 	" <<EOI >>EOO 2>>EOE != 0
+0
+1
+EOI
+0
+EOO
+<stdin>:2:0: error: streaming mode: missing required separator(s) between JSON texts
+EOE
+
+# Separators: SPACE TAB; input: TAB SPACE
+#
+: streaming-all-required-input-is-permutation
+:
+$* --streaming-mode-separators "all 	" <<EOI >>EOO 2>>EOE != 0
+0	 1
+EOI
+0
+EOO
+<stdin>:1:0: error: streaming mode: missing required separator(s) between JSON texts
+EOE
+
+# All separators (TAB SPACE) required; input is identical
+#
+: streaming-all-required-input-is-identical
+:
+$* --streaming-mode-separators "all	 " <<EOI >>EOO
+0	 1
+EOI
+0
+1
+EOO
+
+# All separators (TAB SPACE) required; input is superset (TAB SPACE NL)
+#
+: streaming-all-required-input-is-superset
+:
+$* --streaming-mode-separators "all	 " <<EOI >>EOO
+0	 
+1
+EOI
+0
+1
+EOO

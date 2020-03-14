@@ -3,8 +3,15 @@
 //
 // --fail-exc  -- fail due to istream exception
 // --fail-bit  -- fail due to istream badbit
+//
 // --streaming-mode-separators <separators> -- Enables streaming mode
-//   with the specified required separators
+//   with the specified required separators. If the separators string
+//   begins with "any", the parser will be constructed with
+//   streaming_mode::any_separator; if it begins with "all" the parser
+//   will be constructed with streaming_mode::all_separators. If the
+//   separators string begins with anything else (e.g., whitespace only)
+//   the streaming mode will default to streaming_mode::any_separator.
+//
 // <mode>      -- numeric value parsing mode: i|u|f|d|l|
 
 #include <cassert>
@@ -34,15 +41,18 @@ int main (int argc, const char* argv[])
 {
   bool fail_exc (false);
   bool fail_bit (false);
-  bool streaming_mode_enabled (false);
+  using json::streaming_mode;
+  streaming_mode streaming_opts (streaming_mode::off);
   std::string streaming_mode_separators;
   string nm;
   if (argc > 1)
   {
     string o (argv[1]);
 
-    if      (o == "--fail-exc") fail_exc = true;
-    else if (o == "--fail-bit") fail_bit = true;
+    if (o == "--fail-exc")
+      fail_exc = true;
+    else if (o == "--fail-bit")
+      fail_bit = true;
     else if (o == "--streaming-mode-separators")
     {
       if (argc != 3)
@@ -50,10 +60,24 @@ int main (int argc, const char* argv[])
         cerr << "Missing streaming mode separators" << endl;
         return 1;
       }
-      streaming_mode_enabled = true;
       streaming_mode_separators = argv[2];
+      streaming_opts = streaming_mode::any_separator;
+      if (!streaming_mode_separators.empty ())
+      {
+        if (streaming_mode_separators.compare (0, 3, "any") == 0)
+        {
+          streaming_opts = streaming_mode::any_separator;
+          streaming_mode_separators.erase (0, 3);
+        }
+        else if (streaming_mode_separators.compare (0, 3, "all") == 0)
+        {
+          streaming_opts = streaming_mode::all_separators;
+          streaming_mode_separators.erase (0, 3);
+        }
+      }
     }
-    else nm = move (o);
+    else
+      nm = move (o);
   }
 
   try
@@ -67,9 +91,7 @@ int main (int argc, const char* argv[])
       cin.exceptions (istream::badbit  |
                       istream::failbit |
                       (fail_exc ? istream::eofbit : istream::goodbit));
-
-    parser p (cin, "<stdin>", streaming_mode_enabled,
-              streaming_mode_separators);
+    parser p (cin, "<stdin>", streaming_opts, streaming_mode_separators);
     size_t i (0); // Indentation.
 
     for (event e: p)

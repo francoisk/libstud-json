@@ -58,8 +58,9 @@ namespace stud
     void parser::
     init_streaming_mode ()
     {
-      json_set_streaming (impl_, streaming_mode_enabled_);
-      if (streaming_mode_enabled_ && streaming_mode_separators_ != "ws")
+      json_set_streaming (impl_, streaming_mode_ != streaming_mode::off);
+      if (streaming_mode_ != streaming_mode::off &&
+          streaming_mode_separators_ != "ws")
       {
         for (auto c : streaming_mode_separators_)
         {
@@ -76,11 +77,9 @@ namespace stud
     bool parser::
     is_valid_streaming_separator (const char c) const noexcept
     {
-      assert (streaming_mode_enabled_);
+      assert (streaming_mode_ != streaming_mode::off);
       if (streaming_mode_separators_ == "ws")
-      {
         return json_isspace (c);
-      }
       else
       {
         for (auto sep : streaming_mode_separators_)
@@ -99,11 +98,12 @@ namespace stud
     // might throw after opening the stream).
     //
     parser::
-    parser (istream& is, const char* n, bool streaming_mode_enabled,
+    parser (istream& is, const char* n,
+            streaming_mode streaming_mode_opts,
             const std::string& streaming_mode_separators)
         : input_name (n),
           stream_ {&is, nullptr},
-          streaming_mode_enabled_ (streaming_mode_enabled),
+          streaming_mode_ (streaming_mode_opts),
           streaming_mode_separators_ (streaming_mode_separators),
           raw_s_ (nullptr),
           raw_n_ (0)
@@ -114,11 +114,11 @@ namespace stud
 
     parser::
     parser (const void* t, size_t s, const char* n,
-            bool streaming_mode_enabled,
+            streaming_mode streaming_mode_opts,
             const std::string& streaming_mode_separators)
         : input_name (n),
           stream_ {nullptr, nullptr},
-          streaming_mode_enabled_ (streaming_mode_enabled),
+          streaming_mode_ (streaming_mode_opts),
           streaming_mode_separators_ (streaming_mode_separators),
           raw_s_ (nullptr),
           raw_n_ (0)
@@ -152,28 +152,41 @@ namespace stud
       {
       case JSON_DONE:
         {
-          if (!streaming_mode_enabled_)
+          if (streaming_mode_ == streaming_mode::off)
             return nullopt;
-          bool separator_found (streaming_mode_separators_.empty ());
+          std::string input_separators;
+          bool separators_matched (streaming_mode_separators_.empty ());
           int c;
           while (json_isspace (c = json_source_peek (impl_)))
           {
-            if (is_valid_streaming_separator (c))
-              separator_found = true;
             json_source_get (impl_);
+            if (!separators_matched && is_valid_streaming_separator (c))
+            {
+              if (streaming_mode_ == streaming_mode::any_separator)
+                separators_matched = true;
+              else
+              {
+                assert (streaming_mode_ == streaming_mode::all_separators);
+                input_separators += c;
+                if (input_separators == streaming_mode_separators_)
+                  separators_matched = true;
+              }
+            }
+            else
+              input_separators = "";
           }
           // If EOF was seen, subsequent peeks will fail so best to
           // handle it now.
           //
           if (c == EOF)
             return nullopt;
-          if (!separator_found && json_peek (impl_) != JSON_DONE)
+          if (!separators_matched && json_peek (impl_) != JSON_DONE)
           {
             throw invalid_json (input_name != nullptr ? input_name : "",
                                 static_cast<uint64_t> (json_get_lineno (impl_)),
                                 0 /* column */,
                                 "streaming mode: missing required separator(s) "
-                                "between JSON values");
+                                "between JSON texts");
           }
           json_reset (impl_);
           return next (); // Should be tail recursive.
